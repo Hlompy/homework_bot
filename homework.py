@@ -121,15 +121,14 @@ def main():
             bot.send_message(TELEGRAM_CHAT_ID, message, reply_markup=button)
             time.sleep(RETRY_TIME)
 
-        else:
-            updater.dispatcher.add_handler(
-                CommandHandler('start', send_message)
-            )
-            updater.dispatcher.add_handler(
-                CommandHandler('homework', parse_status)
-            )
-            updater.start_polling()
-            updater.idle()
+        updater.dispatcher.add_handler(
+            CommandHandler('start', send_message)
+        )
+        updater.dispatcher.add_handler(
+            CommandHandler('homework', parse_status)
+        )
+        updater.start_polling()
+        updater.idle()
 
 
 if __name__ == '__main__':
