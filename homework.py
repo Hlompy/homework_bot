@@ -40,7 +40,7 @@ HOMEWORK_STATUSES = {
 
 
 def send_message(bot, message):
-    """Отправка сообщения"""
+    """Отправка сообщения."""
     bot.send_message(
         TELEGRAM_CHAT_ID,
         message
@@ -48,7 +48,7 @@ def send_message(bot, message):
 
 
 def get_api_answer(current_timestamp):
-    """Запрос к API"""
+    """Запрос к API."""
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
     response = requests.get(ENDPOINT, headers=HEADERS, params=params)
@@ -58,7 +58,7 @@ def get_api_answer(current_timestamp):
 
 
 def check_response(response):
-    """Проверка ответа"""
+    """Проверка ответа."""
     if not isinstance(response, dict):
         raise TypeError(
             'Ответ API - не словарь'
@@ -75,7 +75,7 @@ def check_response(response):
 
 
 def parse_status(homework):
-    """Статус домашки"""
+    """Статус домашки."""
     homework_name = homework.get('homework_name')
     homework_status = homework.get('status')
     if 'homework_name' not in homework:
@@ -92,6 +92,7 @@ def parse_status(homework):
 
 
 def check_tokens():
+    """Проверка Токенов."""
     if PRACTICUM_TOKEN and TELEGRAM_TOKEN is not None:
         logging.info('Tokens - OK')
         return True
@@ -128,7 +129,6 @@ def main():
             CommandHandler('homework', parse_status)
         )
         updater.start_polling()
-        updater.idle()
 
 
 if __name__ == '__main__':
