@@ -25,7 +25,7 @@ PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('CHAT_ID')
 
-RETRY_TIME = 600
+TELEGRAM_RETRY_TIME = 600
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
@@ -87,7 +87,6 @@ def check_response(response):
 
 def parse_status(homework):
     """Статус домашки."""
-    homework_name = homework['homework_name']
     homework_status = homework['status']
     if 'homework_name' not in homework:
         message = 'Unknown homework_name of homework'
@@ -101,9 +100,9 @@ def parse_status(homework):
         message = 'Ключ status отсутствует'
         logging.error(message)
         raise KeyError(message)
-    else:
-        homework_status == HOMEWORK_STATUSES.keys()
-        verdict = HOMEWORK_STATUSES.get(homework_status)
+    homework_name = homework['homework_name']
+    homework_status == homework['status']
+    verdict = HOMEWORK_STATUSES.get(homework_status)
     logging.info('PARSE STATUS IS OK')
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
@@ -114,8 +113,8 @@ def check_tokens():
     if PRACTICUM_TOKEN and TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
         logging.info('TOKENS ARE OK')
         return True
-    if PRACTICUM_TOKEN and TELEGRAM_TOKEN and TELEGRAM_CHAT_ID is None:
-        logging.error(variables)
+    if None in variables:
+        logging.error(f'Не хватает переменных: {variables}')
         return False
 
 
@@ -132,13 +131,13 @@ def main():
             for homework in check_response(response):
                 send_message(bot, parse_status(homework))
             current_timestamp = int(time.time())
-            time.sleep(RETRY_TIME)
+            time.sleep(TELEGRAM_RETRY_TIME)
 
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             logging.error(message)
             bot.send_message(TELEGRAM_CHAT_ID, message, reply_markup=button)
-            time.sleep(RETRY_TIME)
+            time.sleep(TELEGRAM_RETRY_TIME)
 
         updater.dispatcher.add_handler(
             CommandHandler('start', send_message)
