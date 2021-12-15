@@ -4,13 +4,11 @@ import time
 
 import requests
 import telegram
-
+from dotenv import load_dotenv
 from telegram import ReplyKeyboardMarkup
 from telegram.ext import CommandHandler, Updater
 
-from dotenv import load_dotenv
-
-from exceptions import ResponseStatusError
+from exceptions import ResponseStatusError, SendMessageError
 
 load_dotenv()
 
@@ -41,19 +39,29 @@ HOMEWORK_STATUSES = {
 
 def send_message(bot, message):
     """Отправка сообщения."""
-    bot.send_message(
-        TELEGRAM_CHAT_ID,
-        message
-    )
+    try:
+        bot.send_message(
+            TELEGRAM_CHAT_ID,
+            message
+        )
+    except Exception:
+        logging.error('ERROR IN SENDING MESSAGE')
+        raise SendMessageError('Сообщение не отправлено')
 
 
 def get_api_answer(current_timestamp):
     """Запрос к API."""
-    timestamp = current_timestamp or int(time.time())
+    timestamp = current_timestamp
     params = {'from_date': timestamp}
-    response = requests.get(ENDPOINT, headers=HEADERS, params=params)
+    try:
+        response = requests.get(ENDPOINT, headers=HEADERS, params=params)
+    except ValueError:
+        logging.error('ERROR IN API ANSWER')
     if response.status_code != 200:
         raise ResponseStatusError('Статус страницы не 200')
+    if response is None:
+        raise TypeError('Status = None')
+    logging.info('API ANSWER IS OK')
     return response.json()
 
 
@@ -67,38 +75,48 @@ def check_response(response):
         raise TypeError(
             'Домашка пришла не в виде списка'
         )
-    if not 'homeworks':
+    if not response['homeworks']:
         raise KeyError(
-            'Неправильный ключ'
+            'Неправильный ключ домашки'
         )
+    if response is None:
+        raise TypeError('Response = None')
+    logging.info('RESPONSE IS OK')
     return response.get('homeworks')
 
 
 def parse_status(homework):
     """Статус домашки."""
-    homework_name = homework.get('homework_name')
-    homework_status = homework.get('status')
+    homework_name = homework['homework_name']
+    homework_status = homework['status']
     if 'homework_name' not in homework:
-        raise KeyError('Ключ homework_name отсутствует')
-    if homework_status not in HOMEWORK_STATUSES.keys():
-        raise KeyError('Ключ status отсутствует')
-    elif homework_status == 'approved':
-        verdict = HOMEWORK_STATUSES.get('approved')
-    elif homework_status == 'reviewing':
-        verdict = HOMEWORK_STATUSES.get('reviewing')
-    elif homework_status == 'rejected':
-        verdict = HOMEWORK_STATUSES.get('rejected')
+        message = 'Unknown homework_name of homework'
+        logging.error(message)
+        raise KeyError(message)
+    if 'status' not in homework:
+        message = 'Unknown status of homework'
+        logging.error(message)
+        raise KeyError(message)
+    if homework_status not in HOMEWORK_STATUSES:
+        message = 'Ключ status отсутствует'
+        logging.error(message)
+        raise KeyError(message)
+    else:
+        homework_status == HOMEWORK_STATUSES.keys()
+        verdict = HOMEWORK_STATUSES.get(homework_status)
+    logging.info('PARSE STATUS IS OK')
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
 
 def check_tokens():
     """Проверка Токенов."""
-    if PRACTICUM_TOKEN and TELEGRAM_TOKEN is not None:
-        logging.info('Tokens - OK')
+    variables = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]
+    if PRACTICUM_TOKEN and TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
+        logging.info('TOKENS ARE OK')
         return True
-    else:
-        logging.error('ERROR')
-    return False
+    if PRACTICUM_TOKEN and TELEGRAM_TOKEN and TELEGRAM_CHAT_ID is None:
+        logging.error(variables)
+        return False
 
 
 def main():
@@ -132,4 +150,5 @@ def main():
 
 
 if __name__ == '__main__':
+    check_tokens()
     main()
