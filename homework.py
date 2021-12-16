@@ -87,7 +87,6 @@ def check_response(response):
 
 def parse_status(homework):
     """Статус домашки."""
-    homework_status = homework['status']
     if 'homework_name' not in homework:
         message = 'Unknown homework_name of homework'
         logging.error(message)
@@ -96,12 +95,12 @@ def parse_status(homework):
         message = 'Unknown status of homework'
         logging.error(message)
         raise KeyError(message)
+    homework_status = homework['status']
     if homework_status not in HOMEWORK_STATUSES:
-        message = 'Ключ status отсутствует'
+        message = 'Unknown homework_status'
         logging.error(message)
         raise KeyError(message)
     homework_name = homework['homework_name']
-    homework_status == homework['status']
     verdict = HOMEWORK_STATUSES.get(homework_status)
     logging.info('PARSE STATUS IS OK')
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
@@ -135,7 +134,7 @@ def main():
 
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
-            logging.error(message)
+            logging.exception(message)
             bot.send_message(TELEGRAM_CHAT_ID, message, reply_markup=button)
             time.sleep(TELEGRAM_RETRY_TIME)
 
