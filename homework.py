@@ -75,7 +75,7 @@ def check_response(response):
         raise TypeError(
             'Домашка пришла не в виде списка'
         )
-    if not response['homeworks']:
+    if 'homeworks' not in response:
         raise KeyError(
             'Неправильный ключ домашки'
         )
